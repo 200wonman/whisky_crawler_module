@@ -4,7 +4,7 @@ const fs = require('fs');
 
 
 // 크롤링 할 url
-const urls = require('./whisky_url.json');
+const urls = require('./whisky_url_input.json');
 
 // URL별로 크롤링하는 함수
 const crawlPage = (url) => {
@@ -67,11 +67,11 @@ Promise.all(crawlPromises).then(allData => {
   }).join('\n\n');
 
   // 하나의 CSV 파일에 저장
-  fs.writeFile('url_output.csv', csvData, (err) => {
+  fs.writeFile('whisky_url_output.csv', csvData, (err) => {
     if (err) {
-      console.error('Error url_output.csv', err);
+      console.error('Error whisky_url_output.csv', err);
     } else {
-      console.log('success url_output.csv');
+      console.log('success whisky_url_output.csv');
     }
   });
 }).catch(error => {
