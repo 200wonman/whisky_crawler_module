@@ -31,7 +31,7 @@ const crawlPage = (url) => {
       // 이미지 크롤링
       const imageURL = $('div#carousel-whisky a.photo img').attr('src');
       if (imageURL && imageURL.includes('https://static.whiskybase.com/storage/whiskies/default/big.png')) {
-        dlData['Image URL'] = 'null';
+        dlData['Image URL'] = '';
       } else {
         dlData['Image URL'] = imageURL;
       }
@@ -61,17 +61,17 @@ Promise.all(crawlPromises).then(allData => {
     return Object.keys(dlData)
       .map(key => {
         const value = Array.isArray(dlData[key]) ? dlData[key].join(", ") : dlData[key];
-        return `"${key}","${value}"`;
+        return `"${key}":"${value}"`;
       })
-      .join('\n');
-  }).join('\n\n');
+      .join(',');
+  }).join('\n');
 
   // 하나의 CSV 파일에 저장
   fs.writeFile('whisky_url_output.csv', csvData, (err) => {
     if (err) {
-      console.error('Error whisky_url_output.csv', err);
+      console.error('Error url_output.csv', err);
     } else {
-      console.log('success whisky_url_output.csv');
+      console.log('success url_output.csv');
     }
   });
 }).catch(error => {
