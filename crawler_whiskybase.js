@@ -6,8 +6,6 @@ const fs = require('fs');
 const headers = [
   "path",
   "titleText",
-  "Overall rating",
-  "votes",
   "Category",
   "Distillery",
   "Bottler",
