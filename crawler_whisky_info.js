@@ -4,7 +4,7 @@ const fs = require('fs');
 const async = require('async');
 console.log('start...');
 
-const whiskyList = require('./urlfolder/1-2.json');
+const whiskyList = require('./urlfolder/2-2.json');
 
 const headers = [
   "path",
