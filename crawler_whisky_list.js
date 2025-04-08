@@ -1,7 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const fs = require('fs');
-const async = require('async');
 console.log('start...');
 
 // 증류소 URL 모음
@@ -27,28 +26,36 @@ const crawlDistillerPage = async (url) => {
     const response = await axiosGetWithRetry(url);
     const $ = cheerio.load(response.data);
     const whiskyData = [];
+    let isCoreRange = false;
 
     $('tbody tr').each((i, tr) => {
-      const sizeTd = $(tr).find('td').eq(5).text();
-      const removeMl = sizeTd.replace('ml', '').trim();
-
-      // 크기가 500ml 이상일 때만 href 추출
-      if (parseInt(removeMl, 10) >= 500) {
-        const href = $(tr).find('td.name a.clickable').attr('href');
-        if (href) {
-          let breadcrumbText = $('ul.breadcrumb').text().trim().replace(/\s+/g, ' ');
-      
-          // "Scotland"가 포함되어 있으면 "Scotland" 뒤에 슬래시를 추가
-          if (breadcrumbText.includes("Scotland")) {
-            breadcrumbText = breadcrumbText.replace("Scotland", "Scotland/");
-          }
-      
-          whiskyData.push({ href, breadcrumb: breadcrumbText });
-          console.log('breadcrumbText : ', breadcrumbText);
-          console.log('href : ', href);
+      if ($(tr).hasClass('seperator')) {
+        if ($(tr).text().includes('Core Range')) {
+          isCoreRange = true;
+        } else if ($(tr).text().includes('Distillery Bottling')) {
+          isCoreRange = false;
         }
-      }      
+      } else if (isCoreRange) {
+        // Core Range 섹션 안의 데이터만 처리
+        const firstTd = $(tr).find('td').eq(0);
+        const sizeTd = $(tr).find('td').eq(5).text();
+        const removeMl = sizeTd.replace('ml', '').trim();
+        const ninthTdText = $(tr).find('td').eq(8).text().trim();
+        const isFirstTdEmpty = firstTd.hasClass('photo buttons') && firstTd.text().trim() === '';
 
+        if (parseInt(removeMl, 10) >= 500 && ninthTdText !== '' && !isFirstTdEmpty) {
+          const href = $(tr).find('td.name a.clickable').attr('href');
+          if (href) {
+            let breadcrumbText = $('ul.breadcrumb').text().trim().replace(/\s+/g, ' ');
+      
+            if (breadcrumbText.includes("Scotland")) {
+              breadcrumbText = breadcrumbText.replace("Scotland", "Scotland/");
+            }
+      
+            whiskyData.push({ href, breadcrumb: breadcrumbText });
+          }
+        }
+      }
     });
 
     return whiskyData;
@@ -65,7 +72,7 @@ const crawlAllDistillers = async () => {
   for (let i = 0; i < firstUrls.length; i += limit) {
     const batch = firstUrls.slice(i, i + limit);
     await Promise.all(batch.map(url => crawlDistillerPage(url).then(data => allWhiskyData.push(...data))));
-    await delay(2000); // 각 배치 처리 후에 1초의 딜레이
+    await delay(2000); // 각 배치 처리 후에 2초의 딜레이
   }
 
   fs.writeFile('whisky_list.json', JSON.stringify(allWhiskyData.flat(), null, 2), (err) => {
